@@ -16,114 +16,104 @@
 
 */
 
-
-class Solution {
+class Solution
+{
 public:
-    /**
-     * @param words: a list of words
-     * @return: a string which is correct order
-     */
-    int find_diff(string &a, string &b) {
-        for(int i=0; i<min(a.size(), b.size()); i++) {
-            if(a[i]!=b[i])
-                return i;
-        }
-        return -1;
-    } 
-    
-    bool dfs(vector<int>adj[], int node, bool vis[], string &ans, bool instack[]) {
-        vis[node] = true;
-        instack[node] = true;
-        for(int child : adj[node]) {
-            if(!vis[child]) {
-                if(dfs(adj, child, vis, ans, instack))
-                    return true;
-            }
-            else if(instack[child]==true)
+    vector<int> graph[26];
+    unordered_map<int, bool> vis, instack;
+    string res;
+
+    bool prefix(string &s1, string &s2)
+    {
+        string curr = "";
+
+        for (char c : s2)
+        {
+            curr += c;
+            if (curr == s2)
+                return false;
+            if (curr == s1)
                 return true;
         }
-        // cout<<((char)(node + 'a'))<<endl;
-        ans += (char)(node + 'a');
-        instack[node] = false;
+
         return false;
     }
-     
-    string alienOrder(vector<string> &words) {
-        // Write your code here
-        int n = words.size();
-        vector<int>adj[26];
-        set<char>s;
-        for(int i=0; i<n-1; i++) {
-            for(int j=i+1; j<n; j++){
-                string w1 = words[i];
-                string w2 = words[j];
-                
-                int id = find_diff(w1, w2);
-                if(id==-1)  continue;
-                adj[w1[id]-'a'].push_back(w2[id]-'a');
-                
+
+    bool dfs(int node)
+    {
+        vis[node] = true;
+        instack[node] = true;
+
+        for (auto child : graph[node])
+        {
+            if (!vis[child])
+            {
+                if (dfs(child))
+                    return true;
+            }
+            else if (vis[child] && instack[child])
+                return true;
+        }
+        res.push_back((char)(node + 'a'));
+        return instack[node] = false;
+    }
+
+    int findDiff(string &s1, string &s2)
+    {
+        for (int i = 0; i < min(s1.size(), s2.size()); i++)
+        {
+            if (s1[i] != s2[i])
+                return i;
+        }
+
+        return -1;
+    }
+
+    string alienOrder(vector<string> &words)
+    {
+        res = "";
+        set<string> occured;
+
+        for (int i = 0; i < words.size(); i++)
+        {
+            for (int j = i + 1; j < words.size(); j++)
+            {
+
+                if (words[i].size() > words[j].size() && prefix(words[j], words[i])) //if the word as a prefix of other comes later
+                    return "";
+
+                int id = findDiff(words[i], words[j]);
+                if (id != -1)
+                    graph[words[i][id] - 'a'].push_back(words[j][id] - 'a');
             }
         }
-        
-        for(int i=0; i<n; i++) {
-            string w1 = words[i];
-            for(int l=0; l<w1.size(); l++)
-                s.insert(w1[l]);
-        }
-        
-        // for(int i=0; i<26; i++) {
-        //     if(adj[i].size()!=0) {
-        //         cout<<((char)('a'+i))<<"->";
-        //         for(int j=0; j<adj[i].size(); j++) {
-        //             cout<<((char)('a'+adj[i][j]))<<" ";
-        //         }
-        //         cout<<endl;
-        //     }
-        // }
-        
-        string ans = "";
-        bool vis[26] = {false};
-        bool instack[26] = {false};
-        for(int i=0; i<26; i++) {
-            if(!vis[i] && adj[i].size()>0) {
-                if(dfs(adj, i, vis, ans, instack))
+
+        for (int i = 0; i < 26; i++)
+        {
+            if (!vis[i] && graph[i].size() > 0)
+            {
+                if (dfs(i))
                     return "";
             }
         }
-        reverse(ans.begin(), ans.end());
-        
-        for(char c : ans) {
-            s.erase(s.find(c));
-        }
-        
-        vector<int>curr_ans;
-        int i=0;
-        set<char> :: iterator it = s.begin();
-        while(i<ans.size() && it!=s.end()) {
-            if(ans[i] < *it){
-                curr_ans.push_back(ans[i]);
-                i++;
-            }
-            else {
-                curr_ans.push_back(*it);
-                it++;
+
+        // if(res=="")
+        //     return res;
+
+        reverse(res.begin(), res.end());
+
+        for (auto x : words)
+        {
+            for (auto y : x)
+            {
+                if (!vis[y - 'a'])
+                {
+                    res += y;
+                    vis[y - 'a'] = true;
+                }
             }
         }
-        
-        while(i<ans.size()){
-            curr_ans.push_back(ans[i++]);
-        }
-        while(it!=s.end()) {
-            curr_ans.push_back(*it);
-            it++;
-        }
-        
-        ans="";
-        for(int i=0; i<curr_ans.size(); i++) {
-            ans += curr_ans[i];
-        }
-        
-        
-        return ans;
+
+        return res;
     }
 };
